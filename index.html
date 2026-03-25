@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Management System</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <!-- Background Animation Canvas -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Background Orbs -->
+    <div class="glow-orb primary"></div>
+    <div class="glow-orb secondary"></div>
+
+    <!-- Centered Login & Portal (Very Beginning) -->
+    <div id="loginPage" class="centered-layout">
+        <!-- Hero Text & Branding -->
+        <div class="login-header">
+            <div class="logo">
+                <i class="fas fa-layer-group" style="color: var(--primary);"></i> EVENT<span
+                    style="font-weight: 300;">CORE</span>
+            </div>
+            <h1 class="hero-title">Manage Campus <span class="text-gradient">Events</span> Seamlessly.</h1>
+            <p class="hero-subtitle">The ultimate command center for coordinators and participants.</p>
+        </div>
+
+        <!-- Login/Action Panel -->
+        <div class="auth-container">
+            <div class="auth-box glass-panel">
+
+                <div class="auth-tabs">
+                    <button id="tabParticipantLoginBtn" class="auth-tab active" onclick="switchAuthTab('participantLogin')">Participant Login</button>
+                    <button id="tabCoordinatorLoginBtn" class="auth-tab" onclick="switchAuthTab('coordinatorLogin')">Coordinator Login</button>
+                    <button id="tabPitchBtn" class="auth-tab" onclick="switchAuthTab('pitch')">Suggest Event</button>
+                    <input type="hidden" id="loginRoleState" value="participant">
+                </div>
+
+                <!-- Participant Login Section -->
+                <div id="participantLoginFormSection" class="auth-section active">
+                    <div class="text-center">
+                        <i class="fas fa-user-graduate" style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                        <h2>Student Portal</h2>
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Log in to browse and join events.</p>
+                    </div>
+
+                    <form onsubmit="login('participant'); return false;">
+                        <input type="hidden" id="participantLoginRole" value="participant">
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="participantEmail" placeholder="Student Email" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="participantPassword" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">Login <i class="fas fa-sign-in-alt"></i></button>
+                        <div id="participantLoginMessage" style="margin-top: 1rem; text-align: center;"></div>
+                    </form>
+
+                    <div style="margin: 1.5rem 0; text-align: center; color: var(--text-muted); position: relative;">
+                        <hr style="border: 1px solid var(--glass-border); margin: 0;">
+                        <span style="background: var(--bg-dark); padding: 0 10px; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 0.9rem;">OR</span>
+                    </div>
+
+                    <!-- Google Authentication -->
+                    <div id="g_id_onload" data-client_id="YOUR_CLIENT_ID_GOES_HERE.apps.googleusercontent.com"
+                        data-context="signin" data-ux_mode="popup" data-callback="handleCredentialResponse"
+                        data-auto_prompt="false">
+                    </div>
+
+                    <div style="display: flex; justify-content: center; margin-top: 1rem;">
+                        <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="filled_black"
+                            data-text="signin_with" data-size="large" data-logo_alignment="left">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coordinator Login Section -->
+                <div id="coordinatorLoginFormSection" class="auth-section">
+                    <div class="text-center">
+                        <i class="fas fa-cube" style="font-size: 3rem; color: var(--secondary); margin-bottom: 1rem;"></i>
+                        <h2>Coordinator Portal</h2>
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Log in to manage events.</p>
+                    </div>
+
+                    <form onsubmit="login('coordinator'); return false;">
+                        <input type="hidden" id="coordinatorLoginRole" value="coordinator">
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="coordinatorEmail" placeholder="Staff Email Address" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="coordinatorPassword" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="btn btn-secondary" style="width: 100%;">Login <i class="fas fa-sign-in-alt"></i></button>
+                        <div id="coordinatorLoginMessage" style="margin-top: 1rem; text-align: center;"></div>
+                    </form>
+
+                    <div style="margin: 1.5rem 0; text-align: center; color: var(--text-muted); position: relative;">
+                        <hr style="border: 1px solid var(--glass-border); margin: 0;">
+                        <span style="background: var(--bg-dark); padding: 0 10px; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 0.9rem;">OR</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: center; margin-top: 1rem;">
+                        <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="filled_black"
+                            data-text="signin_with" data-size="large" data-logo_alignment="left">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suggest Event Section -->
+                <div id="pitchFormSection" class="auth-section">
+                    <div class="text-center">
+                        <i class="fas fa-bolt"
+                            style="font-size: 3rem; color: var(--secondary); margin-bottom: 1rem;"></i>
+                        <h2>Pitch an Event</h2>
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Submit a proposal to coordinators.
+                        </p>
+                    </div>
+
+                    <form id="publicEventForm" onsubmit="submitPublicEvent(); return false;">
+                        <div class="input-group">
+                            <i class="fas fa-heading"></i>
+                            <input type="text" id="publicEventName" placeholder="Event Name" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="publicOrganizerEmail" placeholder="Your Email Address" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-calendar"></i>
+                            <input type="date" id="publicEventDate" required style="padding-left: 3rem;">
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-align-left" style="top: 1.5rem; transform: none;"></i>
+                            <textarea id="publicEventDesc" placeholder="Describe your event and goals..." rows="3"
+                                required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-secondary pulse-btn" style="width: 100%;">Submit Proposal
+                            <i class="fas fa-rocket"></i></button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application (Admin Dashboard) -->
+    <div id="mainApp"
+        style="display: none; background-image: url('assets/bg.png'); background-size: cover; background-attachment: fixed; background-position: center;">
+        <div style="background: rgba(0,0,0,0.85); min-height: 100vh;">
+            <header class="dashboard-header">
+                <div class="logo">
+                    <i class="fas fa-layer-group" style="color: var(--primary);"></i> EVENT<span
+                        style="font-weight: 300;">CORE</span>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.9rem;"
+                        onclick="toggleAIAssistant()"><i class="fas fa-robot"></i> Ask AI</button>
+                    <div class="admin-badge" onclick="toggleProfileMenu()" style="cursor: pointer; position: relative;">
+                        <i class="fas fa-user-shield"></i> <span id="badgeNameText">Coordinator</span>
+
+                        <!-- Profile Dropdown Menu -->
+                        <div id="profileMenu" class="glass-panel"
+                            style="display: none; position: absolute; top: 120%; right: 0; min-width: 200px; padding: 1rem; z-index: 1000; flex-direction: column; gap: 0.5rem; text-align: left;">
+                            <div
+                                style="border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+                                <p style="font-weight: 600; color: var(--text-main); font-size: 0.95rem;"><i
+                                        class="fas fa-user-circle"></i> <span id="dropdownNameText">Event Coordinator</span></p>
+                                <p id="badgeEmailText"
+                                    style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                                    coordinator@eventcore.com</p>
+                            </div>
+                            <button class="btn btn-outline"
+                                style="width: 100%; text-align: left; padding: 0.5rem; font-size: 0.85rem;"
+                                onclick="showModule('coordinatorProfile'); toggleProfileMenu();"><i class="fas fa-cog"></i>
+                                Settings</button>
+                            <button class="btn btn-outline"
+                                style="width: 100%; text-align: left; padding: 0.5rem; font-size: 0.85rem; color: var(--danger); border-color: rgba(255, 0, 85, 0.3);"
+                                onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-layout">
+                <nav class="sidebar glass-panel no-hover"
+                    style="border-radius: 0; border: none; border-right: 1px solid var(--glass-border); padding: 2rem 1rem;">
+                    <!-- Shared / Participant Nav -->
+                    <button onclick="showModule('participantEvents', this)" class="nav-btn participant-nav coordinator-nav active-nav"><i class="fas fa-calendar-alt"></i> Available Events</button>
+                    <button onclick="showModule('myRegistrations', this)" class="nav-btn participant-nav"><i class="fas fa-ticket-alt"></i> My Enrollments</button>
+                    
+                    <!-- Coordinator Only Nav -->
+                    <button onclick="showModule('eventPlanning', this)" class="nav-btn coordinator-nav"><i class="fas fa-calendar-plus"></i> Create Event</button>
+                    <button onclick="showModule('participantProposals', this)" class="nav-btn coordinator-nav"><i class="fas fa-inbox"></i> Proposals
+                        <span id="proposalCount" class="nav-badge">0</span></button>
+                    <button onclick="showModule('taskAssignment', this)" class="nav-btn coordinator-nav"><i class="fas fa-tasks"></i> Assign Tasks</button>
+                    <button onclick="showModule('eventSchedule', this)" class="nav-btn coordinator-nav"><i class="fas fa-timeline"></i> Manage Schedule</button>
+                    <button onclick="showModule('executionTracking', this)" class="nav-btn coordinator-nav"><i class="fas fa-chart-line"></i> Task Tracking</button>
+                    <button onclick="showModule('report', this)" class="nav-btn coordinator-nav"><i class="fas fa-chart-pie"></i> Reports</button>
+                    
+                    <div class="spacer"></div>
+                    <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </nav>
+
+                <main class="content-area">
+
+                    <!-- Participant: Available Events Module -->
+                    <div id="participantEvents" class="module active">
+                        <div class="module-header">
+                            <h2>Available Events</h2>
+                            <p>Browse and register for upcoming college events.</p>
+                        </div>
+                        <div class="input-group" style="max-width: 400px; margin-bottom: 2rem;">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchAvailableEvents" placeholder="Search events..." oninput="displayAvailableEvents()">
+                        </div>
+                        <div id="availableEventsList" class="cards-grid"></div>
+                    </div>
+
+                    <!-- Participant: My Enrollments Module -->
+                    <div id="myRegistrations" class="module">
+                        <div class="module-header">
+                            <h2>My Enrollments</h2>
+                            <p>Events you are currently registered for.</p>
+                        </div>
+                        <div id="myRegistrationsList" class="cards-grid"></div>
+                    </div>
+
+                    <!-- Event Planning Module -->
+                    <div id="eventPlanning" class="module">
+                        <div class="module-header">
+                            <h2>Create Event</h2>
+                            <p>Add a new official event to the college schedule.</p>
+                        </div>
+                        <div class="glass-panel no-hover">
+                            <div
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                                <div class="input-group">
+                                    <i class="fas fa-tag"></i>
+                                    <input type="text" id="eventName" placeholder="Event Name">
+                                </div>
+                                <div class="input-group">
+                                    <i class="fas fa-calendar-day"></i>
+                                    <input type="date" id="eventDate">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <i class="fas fa-align-left" style="top: 1.5rem; transform: none;"></i>
+                                <textarea id="eventDescription" placeholder="Event Description..." rows="3"></textarea>
+                            </div>
+                            <button class="btn" onclick="addEvent()" style="max-width: 200px;">Create Event <i
+                                    class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Participant Proposals Module -->
+                    <div id="participantProposals" class="module">
+                        <div class="module-header">
+                            <h2>Event Proposals</h2>
+                            <p>Review and approve event ideas suggested by students.</p>
+                        </div>
+                        <div id="proposalsList" class="cards-grid"></div>
+                    </div>
+
+                    <!-- Task Assignment Module -->
+                    <div id="taskAssignment" class="module">
+                        <div class="module-header">
+                            <h2>Assign Task</h2>
+                            <p>Allocate tasks to participants or coordinators for specific events.</p>
+                        </div>
+                        <div class="glass-panel no-hover">
+                            <div
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                                <input type="text" id="taskName" placeholder="Task Name">
+                                <input type="text" id="assignedTo" placeholder="Assigned Person">
+                                <select id="taskEvent">
+                                    <option value="">Select Event</option>
+                                </select>
+                            </div>
+                            <button class="btn" onclick="addTask()" style="max-width: 200px;">Assign Task <i
+                                    class="fas fa-check"></i></button>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Event Schedule Module -->
+                    <div id="eventSchedule" class="module">
+                        <div class="module-header">
+                            <h2>Event Schedule</h2>
+                            <p>View all active and scheduled events.</p>
+                        </div>
+                        <div class="input-group" style="max-width: 400px; margin-bottom: 2rem;">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchEvents" placeholder="Search events..."
+                                oninput="filterEvents()">
+                        </div>
+                        <div id="scheduleList" class="cards-grid"></div>
+                    </div>
+
+                    <!-- Execution Tracking Module (Kanban) -->
+                    <div id="executionTracking" class="module">
+                        <div class="module-header">
+                            <h2>Task Tracking Kanban</h2>
+                            <p>Drag and drop physical task cards to update their status instantly.</p>
+                        </div>
+                        <div class="kanban-board">
+                            <!-- Pending Column -->
+                            <div class="kanban-col" id="kanbanPending" ondrop="drop(event, 'Pending')"
+                                ondragover="allowDrop(event)">
+                                <h3 class="kanban-col-header" style="border-bottom: 2px solid var(--danger);">Pending
+                                </h3>
+                                <div class="kanban-items" id="col-Pending"></div>
+                            </div>
+
+                            <!-- In Progress Column -->
+                            <div class="kanban-col" id="kanbanInProgress" ondrop="drop(event, 'In Progress')"
+                                ondragover="allowDrop(event)">
+                                <h3 class="kanban-col-header" style="border-bottom: 2px solid var(--primary);">In
+                                    Progress</h3>
+                                <div class="kanban-items" id="col-InProgress"></div>
+                            </div>
+
+                            <!-- Completed Column -->
+                            <div class="kanban-col" id="kanbanCompleted" ondrop="drop(event, 'Completed')"
+                                ondragover="allowDrop(event)">
+                                <h3 class="kanban-col-header" style="border-bottom: 2px solid #00c853;">Completed</h3>
+                                <div class="kanban-items" id="col-Completed"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coordinator Profile Module -->
+                    <div id="coordinatorProfile" class="module">
+                        <div class="module-header">
+                            <h2>Coordinator Profile</h2>
+                            <p>Manage your account settings and personal information.</p>
+                        </div>
+                        <div class="glass-panel no-hover" style="max-width: 600px; margin: 0 auto;">
+                            <div style="text-align: center; margin-bottom: 2rem;">
+                                <div style="width: 100px; height: 100px; background: rgba(57, 255, 20, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; border: 2px solid var(--primary);">
+                                    <i class="fas fa-user-astronaut" style="font-size: 3rem; color: var(--primary);"></i>
+                                </div>
+                                <h3 id="profilePageNameDisplay">Event Coordinator</h3>
+                                <p style="color: var(--text-muted);" id="profilePageEmail">coordinator@eventcore.com</p>
+                            </div>
+                            
+                            <form onsubmit="updateProfile(); return false;" id="profileForm">
+                                <div class="input-group">
+                                    <i class="fas fa-user"></i>
+                                    <input type="text" id="profileName" placeholder="Full Name" value="Event Coordinator" required>
+                                </div>
+                                <div class="input-group">
+                                    <i class="fas fa-envelope"></i>
+                                    <input type="email" id="profileEmail" placeholder="Email Address" value="coordinator@eventcore.com" required>
+                                </div>
+                                <div class="input-group">
+                                    <i class="fas fa-lock"></i>
+                                    <input type="password" id="profilePassword" placeholder="New Password (Optional)">
+                                </div>
+                                <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">Save Changes <i class="fas fa-save"></i></button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Report Module -->
+                    <div id="report" class="module">
+                        <div class="module-header">
+                            <h2>Reports</h2>
+                            <p>High-level overview of total events and tasks.</p>
+                        </div>
+                        <button class="btn btn-secondary" style="max-width: 250px; margin-bottom: 2rem;"
+                            onclick="generateReport()"><i class="fas fa-sync"></i> Refresh Data</button>
+                        <div id="reportContent" class="cards-grid" style="margin-bottom: 3rem;"></div>
+
+                        <div class="glass-panel no-hover"
+                            style="max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; align-items: center;">
+                            <h3 style="margin-bottom: 1.5rem; text-align: center;">Task Completion Distribution</h3>
+                            <canvas id="taskPieChart"></canvas>
+                        </div>
+                    </div>
+
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Chatbot Window -->
+    <div id="aiAssistant" class="glass-panel"
+        style="display: none; position: fixed; bottom: 30px; right: 30px; width: 450px; z-index: 2000; padding: 1.5rem; box-shadow: 0 10px 40px rgba(57, 255, 20, 0.3);">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+            <h3 style="color: var(--primary); font-size: 1.2rem;"><i class="fas fa-robot"></i> EventCore AI</h3>
+            <button onclick="toggleAIAssistant()"
+                style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; transition: color 0.3s;"><i
+                    class="fas fa-times"></i></button>
+        </div>
+        <div id="aiChatWindow"
+            style="height: 480px; max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1rem; padding-right: 0.5rem;">
+            <div
+                style="padding: 0.6rem 1rem; border-radius: 8px; max-width: 85%; font-size: 0.95rem; line-height: 1.4; background: rgba(0,15,0,0.8); border: 1px solid var(--glass-border); color: #fff; align-self: flex-start;">
+                Hello! I am the EventCore AI Assistant.<br><br>Reply with a number:<br><b>1</b> - List
+                Events<br><b>2</b> - Enroll Participant<br><b>3</b> - View Quick Report
+            </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="aiInput" placeholder="Ask something..."
+                style="padding: 0.8rem; flex: 1; border-radius: 8px;"
+                onkeypress="if(event.key === 'Enter') processAIInput()">
+            <button onclick="processAIInput()" class="btn" style="padding: 0.8rem 1rem; border-radius: 8px;"><i
+                    class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
