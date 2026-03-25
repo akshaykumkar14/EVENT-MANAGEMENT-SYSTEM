@@ -13,5 +13,5 @@ EventCore is a responsive event management platform for colleges that connects s
 
 *Real-time analytics and reports.
 
-*oogle authentication for secure login.
+*Google authentication for secure login.
 
